@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.DS_Store
+bharatai_extractor/
+markdown_output/
+crawls/
