@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PROJECT_DIR="/home/ubuntu/bharati-data-extractor"
+PROJECT_DIR="/home/ubuntu/bharataiscrapper"
 LOG_DIR="$PROJECT_DIR/logs"
 JOBDIR="$PROJECT_DIR/crawls/knowledge-resume-1"
 
@@ -11,7 +11,7 @@ RESTART_LOG="$LOG_DIR/restart.log"
 HEARTBEAT_FILE="$LOG_DIR/heartbeat.txt"
 
 cd "$PROJECT_DIR"
-source rag_env/bin/activate
+source ./rag_env/bin/activate
 
 monitor_activity() {
     while true; do
