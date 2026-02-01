@@ -21,15 +21,15 @@ class KnowledgeSpider(scrapy.Spider):
     ]
 
     # 🌍 Domains likely to contain real docs
-   TRUST_DOMAIN_HINTS = [
-    ".gov.in",      # Central & State Government
-    ".nic.in",      # National Informatics Centre hosted sites
-    ".ac.in",       # Indian academic institutions
-    ".edu.in",      # Educational institutions (less common now)
-    ".org.in",      # Govt-affiliated orgs / councils
-    ".res.in",      # Research institutions
-    ".ernet.in",    # Education & research network
-    ".aiims.edu",   # AIIMS and medical institutes
+    TRUST_DOMAIN_HINTS = [
+        ".gov.in",      # Central & State Government
+        ".nic.in",      # National Informatics Centre hosted sites
+        ".ac.in",       # Indian academic institutions
+        ".edu.in",      # Educational institutions (less common now)
+        ".org.in",      # Govt-affiliated orgs / councils
+        ".res.in",      # Research institutions
+        ".ernet.in",    # Education & research network
+        ".aiims.edu",   # AIIMS and medical institutes
     ]
 
 
