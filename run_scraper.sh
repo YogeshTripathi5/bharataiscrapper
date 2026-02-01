@@ -11,6 +11,7 @@ RESTART_LOG="$LOG_DIR/restart.log"
 HEARTBEAT_FILE="$LOG_DIR/heartbeat.txt"
 
 cd "$PROJECT_DIR"
+source /home/ubuntu/rag_env/bin/activate
 
 monitor_activity() {
     while true; do
