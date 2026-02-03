@@ -7,7 +7,6 @@ JOBDIR="$PROJECT_DIR/crawls/knowledge-resume-1"
 mkdir -p "$LOG_DIR"
 
 ERROR_LOG="$LOG_DIR/error.log"
-RESTART_LOG="$LOG_DIR/restart.log"
 HEARTBEAT_FILE="$LOG_DIR/heartbeat.txt"
 
 cd "$PROJECT_DIR"
@@ -22,33 +21,34 @@ monitor_activity() {
             now=$(date +%s)
             diff=$((now - last))
 
-            # Hang detection = 15 minutes (900 sec)
+            # Hang detection = 15 minutes
             if [ $diff -gt 900 ]; then
-                echo "Hang detected at $(date). Killing spider..." >> "$RESTART_LOG"
+                echo "Hang detected at $(date). Killing spider..." >> "$ERROR_LOG"
                 pkill -f "scrapy crawl knowledge"
+                exit 0
             fi
         fi
     done
 }
 
-while true; do
-    echo "Starting crawler at $(date)" >> "$RESTART_LOG"
+echo "Starting crawler at $(date)" >> "$ERROR_LOG"
 
-    monitor_activity &
-    MONITOR_PID=$!
+monitor_activity &
+MONITOR_PID=$!
 
-    scrapy crawl knowledge         -s JOBDIR="$JOBDIR"         -s LOG_LEVEL=ERROR         > "$ERROR_LOG" 2>&1 &
+scrapy crawl knowledge \
+    -s JOBDIR="$JOBDIR" \
+    -s LOG_LEVEL=ERROR \
+    > "$ERROR_LOG" 2>&1 &
 
-    SCRAPY_PID=$!
+SCRAPY_PID=$!
 
-    # Heartbeat updater
-    while kill -0 $SCRAPY_PID 2>/dev/null; do
-        date +%s > "$HEARTBEAT_FILE"
-        sleep 120
-    done
-
-    kill $MONITOR_PID 2>/dev/null
-
-    echo "Scraper stopped/crashed at $(date). Restarting in 30 sec..." >> "$RESTART_LOG"
-    sleep 30
+# Heartbeat updater
+while kill -0 $SCRAPY_PID 2>/dev/null; do
+    date +%s > "$HEARTBEAT_FILE"
+    sleep 120
 done
+
+kill $MONITOR_PID 2>/dev/null
+
+echo "Crawler finished or stopped at $(date)" >> "$ERROR_LOG"
