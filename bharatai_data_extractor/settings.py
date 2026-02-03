@@ -41,9 +41,16 @@ DEFAULT_REQUEST_HEADERS = {
 }
 DOWNLOAD_DELAY = 1
 
-DEPTH_LIMIT = 0
+DEPTH_LIMIT = 5
 CLOSESPIDER_PAGECOUNT = 0
 
 ITEM_PIPELINES = {
     'bharatai_data_extractor.pipelines.MarkdownPipeline': 300,
 }
+
+# Disable domain restrictions - must disable OffsiteMiddleware in downloader middlewares
+DOWNLOADER_MIDDLEWARES = {
+    'scrapy.downloadermiddlewares.offsite.OffsiteMiddleware': None,  # Disable to allow all domains
+}
+
+

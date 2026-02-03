@@ -1,10 +1,14 @@
 import scrapy
 from scrapy.http import TextResponse
 from bharatai_data_extractor.items import PageItem
+from urllib.parse import urlparse
 
 class KnowledgeSpider(scrapy.Spider):
     name = "knowledge"
     visited_urls = set()
+    
+    # Allow all domains - don't restrict to start domain
+    allowed_domains = []  # Empty list = no domain restrictions
 
     # 🚫 Never crawl these (internet explosion sources)
     BLOCKED_DOMAINS = [
@@ -30,6 +34,13 @@ class KnowledgeSpider(scrapy.Spider):
         ".res.in",      # Research institutions
         ".ernet.in",    # Education & research network
         ".aiims.edu",   # AIIMS and medical institutes
+        ".gov",      # Central & State Government
+        ".nic",      # National Informatics Centre hosted sites
+        ".ac",       # Indian academic institutions
+        ".edu",      # Educational institutions (less common now)
+        ".org",      # Govt-affiliated orgs / councils
+        ".res",      # Research institutions
+        ".ernet"  # AIIMS and medical institutes
     ]
 
 
@@ -37,7 +48,7 @@ class KnowledgeSpider(scrapy.Spider):
 
     def start_requests(self):
         yield scrapy.Request(
-            "https://www.education.gov.in",
+            "https://www.education.gov.in/en/higher_education",
             meta={"playwright": True}
         )
 
@@ -83,8 +94,13 @@ class KnowledgeSpider(scrapy.Spider):
         if not self.is_relevant_page(response) and not self.is_trusted_domain(response.url):
             return
 
+        # Extract domain from URL
+        parsed_url = urlparse(response.url)
+        domain = parsed_url.netloc  # e.g., 'education.gov.in' or 'nta.ac.in'
+        
         item = PageItem()
         item["url"] = response.url
+        item["domain"] = domain
         item["title"] = response.css("title::text").get()
         item["meta_desc"] = response.css("meta[name='description']::attr(content)").get()
 

@@ -8,6 +8,7 @@ import scrapy
 
 class PageItem(scrapy.Item):
     url = scrapy.Field()
+    domain = scrapy.Field()
     title = scrapy.Field()
     headings = scrapy.Field()
     paragraphs = scrapy.Field()
