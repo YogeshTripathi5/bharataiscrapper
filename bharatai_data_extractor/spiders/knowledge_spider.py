@@ -2,10 +2,13 @@ import scrapy
 from scrapy.http import TextResponse
 from bharatai_data_extractor.items import PageItem
 from urllib.parse import urlparse
+import os
+from datetime import datetime
 
 class KnowledgeSpider(scrapy.Spider):
     name = "knowledge"
     visited_urls = set()
+    visited_urls_file = "visited_urls.txt"
     
     # Allow all domains - don't restrict to start domain
     allowed_domains = []  # Empty list = no domain restrictions
@@ -37,18 +40,28 @@ class KnowledgeSpider(scrapy.Spider):
         ".gov",      # Central & State Government
         ".nic",      # National Informatics Centre hosted sites
         ".ac",       # Indian academic institutions
-        ".edu",      # Educational institutions (less common now)
-        ".org",      # Govt-affiliated orgs / councils
-        ".res",      # Research institutions
-        ".ernet"  # AIIMS and medical institutes
     ]
+
 
 
     handle_httpstatus_list = [403]
 
+    def spider_opened(self, spider):
+        """Initialize the visited URLs file when spider starts"""
+        with open(self.visited_urls_file, 'w', encoding='utf-8') as f:
+            f.write(f"# Visited URLs - Scraping started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write("# " + "="*70 + "\n\n")
+        self.logger.info(f"📝 Visited URLs will be logged to: {self.visited_urls_file}")
+
+    def log_visited_url(self, url):
+        """Append a visited URL to the file"""
+        with open(self.visited_urls_file, 'a', encoding='utf-8') as f:
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            f.write(f"[{timestamp}] {url}\n")
+
     def start_requests(self):
         yield scrapy.Request(
-            "https://www.swayamprabha.gov.in",
+            "https://www.edfirst.in/",
             meta={"playwright": True}
         )
 
@@ -82,9 +95,19 @@ class KnowledgeSpider(scrapy.Spider):
                 self.logger.error(f"❌ blocked (403) even with standard request: {response.url}. Skipping.")
             return
 
-        if response.url in self.visited_urls:
+        # 🔗 Normalize URL by removing fragment (#anchor) to avoid duplicate scraping
+        parsed_url = urlparse(response.url)
+        normalized_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
+        if parsed_url.query:
+            normalized_url += f"?{parsed_url.query}"
+        
+        if normalized_url in self.visited_urls:
+            self.logger.info(f"⏭️ Skipping duplicate (fragment): {response.url}")
             return
-        self.visited_urls.add(response.url)
+        self.visited_urls.add(normalized_url)
+        
+        # 📝 Log the visited URL to file
+        self.log_visited_url(response.url)
 
         # 📄 Check if it's text (HTML) content
         if not isinstance(response, TextResponse):
@@ -95,7 +118,6 @@ class KnowledgeSpider(scrapy.Spider):
             return
 
         # Extract domain from URL
-        parsed_url = urlparse(response.url)
         domain = parsed_url.netloc  # e.g., 'education.gov.in' or 'nta.ac.in'
         
         item = PageItem()
@@ -104,8 +126,39 @@ class KnowledgeSpider(scrapy.Spider):
         item["title"] = response.css("title::text").get()
         item["meta_desc"] = response.css("meta[name='description']::attr(content)").get()
 
-        item["headings"] = response.css("h1::text, h2::text, h3::text, h4::text").getall()
-        item["paragraphs"] = response.css("p::text, li::text, span::text, div::text").getall()
+        # Extract headings and remove duplicates
+        headings = response.css("h1::text, h2::text, h3::text, h4::text").getall()
+        headings = [h.strip() for h in headings if h.strip()]
+        # Remove duplicates while preserving order
+        seen_headings = set()
+        unique_headings = []
+        for h in headings:
+            if h not in seen_headings:
+                seen_headings.add(h)
+                unique_headings.append(h)
+        item["headings"] = unique_headings
+        
+        # 📝 Extract paragraphs more intelligently - focus on main content, avoid nav/footer repetition
+        # Try to get content from main content areas first
+        main_content = response.css("main, article, .content, #content")
+        if main_content:
+            # Extract from main content area
+            paragraphs = main_content.css("p::text").getall()
+        else:
+            # Fallback to all paragraphs, but avoid navigation
+            paragraphs = response.css("p::text").getall()
+        
+        # Filter out empty or very short text (likely UI elements)
+        paragraphs = [p.strip() for p in paragraphs if p.strip() and len(p.strip()) > 20]
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_paragraphs = []
+        for p in paragraphs:
+            if p not in seen:
+                seen.add(p)
+                unique_paragraphs.append(p)
+        
+        item["paragraphs"] = unique_paragraphs
 
         # 📊 TABLES
         tables = []

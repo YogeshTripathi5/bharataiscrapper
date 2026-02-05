@@ -53,4 +53,9 @@ DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.offsite.OffsiteMiddleware': None,  # Disable to allow all domains
 }
 
+# Enable spider signals
+EXTENSIONS = {
+    'scrapy.extensions.logstats.LogStats': 500,
+}
+
 
