@@ -17,7 +17,7 @@ class KnowledgeSpider(scrapy.Spider):
     BLOCKED_DOMAINS = [
         "facebook", "twitter", "instagram", "linkedin",
         "pinterest", "amazon", "flipkart", "netflix",
-        "spotify", "news", "blogspot", "wordpress"
+        "spotify", "news", "blogspot", "wordpress","x.com","x","wikipedia","apple"
     ]
 
     # 🧠 Indicates knowledge pages
@@ -61,7 +61,7 @@ class KnowledgeSpider(scrapy.Spider):
 
     def start_requests(self):
         yield scrapy.Request(
-            "https://www.swayamprabha.gov.in",
+            "https://www.nirfindia.org",
             meta={"playwright": True}
         )
 
