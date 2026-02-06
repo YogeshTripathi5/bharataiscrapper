@@ -40,6 +40,7 @@ class KnowledgeSpider(scrapy.Spider):
         ".gov",      # Central & State Government
         ".nic",      # National Informatics Centre hosted sites
         ".ac",       # Indian academic institutions
+        ".org",
     ]
 
 
