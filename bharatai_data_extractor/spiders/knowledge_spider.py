@@ -62,7 +62,7 @@ class KnowledgeSpider(scrapy.Spider):
 
     def start_requests(self):
         yield scrapy.Request(
-            "https://www.iksindia.org",
+            "https://aishe.gov.in",
             meta={"playwright": True}
         )
 
